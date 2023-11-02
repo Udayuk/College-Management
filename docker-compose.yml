@@ -1,0 +1,37 @@
+# Use postgres/example user/password credentials
+version: '3.1'
+
+volumes:
+  db: 
+
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: collegedb
+    ports:
+      - 5432:5432
+    volumes: 
+      - db:/var/lib/postgresql/data
+
+  webservice:
+    build: .
+    command: bash -c "
+          python manage.py makemigrations
+          && python manage.py migrate 
+          && python manage.py shell < createsuperuser.py 
+          && python manage.py runserver 0.0.0.0:8000"    
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: collegedb
+    ports:
+      - 8000:8000
+    volumes: 
+      - ./:/app
+    depends_on:
+      - db
